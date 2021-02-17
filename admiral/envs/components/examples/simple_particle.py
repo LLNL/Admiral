@@ -115,11 +115,11 @@ if __name__ == "__main__":
     
     agents = {f'agent{i}': ParticleAgent(
         id=f'agent{i}',
-        max_speed=.25,
+        max_speed=.1,
         max_acceleration=0.1,
         mass=1,
         size=1,
-    ) for i in range(10)}
+    ) for i in range(20)}
     agents = {**agents, 
         f'fixed_landmark0': FixedLandmark(id='fixed_landmark0'),
         f'moving_landmark0': MovingLandmark(id='moving_landmark0', max_speed=1),
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     env = ParticleEnv(
         agents=agents,
-        region=10,
+        region=20,
         friction=0.0
     )
     fig = plt.figure()

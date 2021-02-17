@@ -355,12 +355,13 @@ class ContinuousCollisionActor:
                     print('{} vs {}, Distance (before): {}'.format(agent1, agent2, dist))
                     print('{} vs {}, Allowed (before): {}'.format(agent1, agent2, combined_sizes))
                     self._undo_overlap(agent1, agent2, dist, combined_sizes)
+                    kwargs['env'].render(fig=kwargs['fig'])
                     print('{} vs {}, Distance (after): {}'.format(agent1, agent2, np.linalg.norm(agent1.position - agent2.position)))
                     print('{} vs {}, Allowed (after): {}'.format(agent1, agent2, agent1.size + agent2.size))
                     self._update_velocities(agent1, agent2)
 
     def _undo_overlap(self, agent1, agent2, dist, combined_sizes, **kwargs):
-        overlap = (combined_sizes - dist) / combined_sizes
+        overlap = (combined_sizes - dist) #/ combined_sizes
         print('{} vs {}, Overlap: {}'.format(agent1, agent2, overlap))
         self.position_state.modify_position(agent1, -agent1.velocity * overlap)
         self.position_state.modify_position(agent2, -agent2.velocity * overlap)
