@@ -74,6 +74,74 @@ class LifeState:
 
 
 
+# ------------- #
+# --- Plume --- #
+# ------------- #
+
+class PlumeState:
+    """
+    The source of a plume exists somewhere within the region. It has a strength
+    and Gaussian diffusion. There is also wind, which blows the plume a certain
+    direction. This disperses concentrations through the region, which the agents
+    can try to measure.
+
+    The plume is static throughout the entire episode.
+
+    region (int):
+        The size of the region.
+
+    initial_source_location (np.array):
+        The (x, y, z) location of the plume's source. If None, then the source
+        will appear in a different location at the start of every episode.
+    
+    strength (float):
+        The strength of the plume source, which impacts the concentration across
+        the region.
+    
+    initial_wind_velocity (np.array):
+        The velocity of the wind.
+    
+    TODO: Not entirely sure what these two do. I think the y-direction disk will
+          have to update to be in the direction that is perpendicular to the wind
+          velocity.
+    disk_area_y (float):
+        Disk area parameter in the y direction.
+    
+    disk_area_z (float):
+        Disk area parameter in the z direction.
+    """
+    def __init__(self, region= None, initial_source_location=None, strength=10., initial_wind_velocity=None, \
+        disk_area_y=0.5, disk_area_z=0.2):
+        self.region = region
+        self.strength = strength
+        self.disk_area_y = disk_area_y
+        self.disk_area_z = disk_area_z
+
+        self.initial_source_location = initial_source_location
+        self.initial_wind_velocity = initial_wind_velocity
+
+        # These will be set at reset
+        self.source_location = None
+        self.wind_velocity = None
+    
+    def reset(self, **kwargs):
+        """
+        Reset the plume. If the plume has initial source and wind velocity, then
+        use those. Otherwise, randomly pick a location within the region for the
+        source and a random wind velocity between 1 and 10 1-norm.
+        """
+        if self.initial_source_location is not None:
+            self.source_location = self.initial_source_location
+        else:
+            self.source_location = np.random.uniform(0, self.region, 2)
+        
+        if self.initial_wind_velocity is not None:
+            self.wind_velocity = self.initial_wind_velocity
+        else:
+            self.wind_velocity = np.random.uniform(1, 10, 2)
+
+
+
 # ----------------------------- #
 # --- Position and Movement --- #
 # ----------------------------- #
@@ -322,72 +390,6 @@ class VelocityState:
                 agent.velocity *= new_speed / old_speed
 
 
-
-# ------------- #
-# --- Plume --- #
-# ------------- #
-
-class PlumeState:
-    """
-    The source of a plume exists somewhere within the region. It has a strength
-    and Gaussian diffusion. There is also wind, which blows the plume a certain
-    direction. This disperses concentrations through the region, which the agents
-    can try to measure.
-
-    The plume is static throughout the entire episode.
-
-    region (int):
-        The size of the region.
-
-    initial_source_location (np.array):
-        The (x, y, z) location of the plume's source. If None, then the source
-        will appear in a different location at the start of every episode.
-    
-    strength (float):
-        The strength of the plume source, which impacts the concentration across
-        the region.
-    
-    initial_wind_velocity (np.array):
-        The velocity of the wind.
-    
-    TODO: Not entirely sure what these two do. I think the y-direction disk will
-          have to update to be in the direction that is perpendicular to the wind
-          velocity.
-    disk_area_y (float):
-        Disk area parameter in the y direction.
-    
-    disk_area_z (float):
-        Disk area parameter in the z direction.
-    """
-    def __init__(self, region= None, initial_source_location=None, strength=10., initial_wind_velocity=None, \
-        disk_area_y=0.5, disk_area_z=0.2):
-        self.region = region
-        self.strength = strength
-        self.disk_area_y = disk_area_y
-        self.disk_area_z = disk_area_z
-
-        self.initial_source_location = initial_source_location
-        self.initial_wind_velocity = initial_wind_velocity
-
-        # These will be set at reset
-        self.source_location = None
-        self.wind_velocity = None
-    
-    def reset(self, **kwargs):
-        """
-        Reset the plume. If the plume has initial source and wind velocity, then
-        use those. Otherwise, randomly pick a location within the region for the
-        source and a random wind velocity between 1 and 10 1-norm.
-        """
-        if self.initial_source_location is not None:
-            self.source_location = self.initial_source_location
-        else:
-            self.source_location = np.random.uniform(0, self.region, 2)
-        
-        if self.initial_wind_velocity is not None:
-            self.wind_velocity = self.initial_wind_velocity
-        else:
-            self.wind_velocity = np.random.uniform(1, 10, 2)
 
 # -------------------------------- #
 # --- Resources and Harvesting --- #
