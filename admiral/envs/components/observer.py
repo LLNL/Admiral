@@ -5,7 +5,7 @@ import numpy as np
 from admiral.envs.components.agent import HealthObservingAgent, LifeObservingAgent, \
     AgentObservingAgent, PositionObservingAgent, SpeedAngleObservingAgent, VelocityObservingAgent, \
     ResourceObservingAgent, TeamObservingAgent, PositionAgent, LifeAgent, TeamAgent, \
-    SpeedAngleAgent, VelocityAgent
+    SpeedAngleAgent, VelocityAgent, PlumeSamplingAgent
 
 # ----------------- #
 # --- Utilities --- #
@@ -181,6 +181,34 @@ class PositionRestrictedMaskObserver(MaskObserver):
         if obs:
             obs_key = next(iter(obs))
             return {obs_key: obs_filter(obs[obs_key], agent, self.agents, self.null_value)}
+        else:
+            return {}
+
+
+
+# ------------- #
+# --- Plume --- #
+# ------------- #
+
+class PlumeSampleObserver:
+    """
+    The agent observes the plume concentration at its location with some noise depending
+    on its own nosie parameter.
+    """
+    def __init__(self, plume_state=None, agents=None, **kwargs):
+        self.plume_state = plume_state
+        self.agents = agents
+        from gym.spaces import Box
+        for agent in agents.values():
+            if isinstance(agent, PlumeSamplingAgent):
+                agent.observation_space['concentration'] = Box(0, plume_state.strength, (1,))
+
+    def get_obs(self, agent, **kwargs):
+        """
+        Get the concentration of the plume at the agent's location +- some noise.
+        """
+        if isinstance(agent, PlumeSamplingAgent):
+            return {'concentration': 0.0} # TODO: implement sampling code
         else:
             return {}
 
