@@ -2,6 +2,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+import scipy as sp
 
 from admiral.envs.components.agent import LifeAgent, PositionAgent, SpeedAngleAgent, VelocityAgent, \
     CollisionAgent
@@ -139,7 +140,14 @@ class PlumeState:
             self.wind_velocity = self.initial_wind_velocity
         else:
             self.wind_velocity = np.random.uniform(1, 10, 2)
-
+    
+        # Add all the extra wind parameters needed for observing the concentrations
+        self.wind_speed = np.linalg.norm(self.wind_velocity)
+        self.wind_unit_vector = self.wind_velocity / self.wind_speed
+        self.wind_perpendicular = np.array([self.wind_velocity[1], -self.wind_velocity[0]])
+        radian = np.arccos(np.dot(np.array([1., 0.]), self.wind_unit_vector))
+        self.wind_angle = radian if self.wind_velocity[1] >= 0. else -radian
+        self.wind_rotation_matrix = sp.linalg.expm(np.cross(np.eye(2), -self.wind_angle * np.array([0., 1.])))
 
 
 # ----------------------------- #
