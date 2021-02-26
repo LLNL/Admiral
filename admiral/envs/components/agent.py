@@ -168,6 +168,28 @@ class AgentObservingAgent(ObservingAgent):
 
 
 
+# ------------- #
+# --- Plume --- #
+# ------------- #
+
+class PlumeSamplingAgent(ObservingAgent, ActingAgent):
+    """
+    Agents can sample the environment based on their location and receive a concentration
+    measurement.
+
+    noise (float):
+        The magnitude of Gaussian noise to add to their concentration.
+    """
+    def __init__(self, noise=0.0, **kwargs):
+        super().__init__(**kwargs)
+        self.noise = noise
+    
+    @property
+    def configured(self):
+        return super().configured and self.noise
+
+
+
 # ----------------------------- #
 # --- Position and Movement --- #
 # ----------------------------- #
