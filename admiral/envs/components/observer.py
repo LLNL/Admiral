@@ -195,9 +195,13 @@ class PlumeSampleObserver:
     The agent observes the plume concentration at its location with some noise depending
     on its own nosie parameter.
     """
-    def __init__(self, plume_state=None, agents=None, **kwargs):
+    def __init__(self, plume_state=None, agents=None, lower_bound=1e-5, upper_bound=1e5, \
+                 offset=1e-100, **kwargs):
         self.plume_state = plume_state
         self.agents = agents
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.offset = offset
         from gym.spaces import Box
         for agent in agents.values():
             if isinstance(agent, PlumeSamplingAgent):
@@ -207,8 +211,26 @@ class PlumeSampleObserver:
         """
         Get the concentration of the plume at the agent's location +- some noise.
         """
-        if isinstance(agent, PlumeSamplingAgent):
-            return {'concentration': 0.0} # TODO: implement sampling code
+        if isinstance(agent, PlumeSamplingAgent) and \
+           isinstance(agent, PositionAgent):
+            rel_sensor_coords = agent.position - self.plume_state.source_location
+            line_point = self.plume_state.source_location + self.plume_state.wind_perpendicular
+            wind_barrier = np.cross(rel_sensor_coords, (line_point - agent.position))
+            if not np.all(self.plume_state.wind_velocity == np.array([1.0, 0.0])):
+                rel_sensor_coords = np.dot(self.plume_state.wind_rotation_matrix, agent.position)
+
+            sigma_y = self.plume_state.disk_area_y * rel_sensor_coords[0] * (1+0.0004*rel_sensor_coords[0]**(-0.5))
+            sigma_z = self.plume_state.disk_area_z * rel_sensor_coords[0]
+            a_t = -0.5 * (1 / sigma_z)**2
+            b_t = -0.5 * (2 / sigma_z)**2
+            c_t = -0.5 * (rel_sensor_coords[1] / sigma_y)**2
+            concentration = (self.plume_state.strength / (2 * np.pi * sigma_y * sigma_z * self.plume_state.wind_speed)) * np.exp(c_t) * (np.exp(a_t) + np.exp(b_t))
+
+            concentration += agent.noise * np.random.normal(0, 1)
+            concentration = np.clip(concentration, self.lower_bound, self.upper_bound)
+            concentration = np.where(wind_barrier > 0, concentration, self.offset)
+
+            return {'concentration': concentration}
         else:
             return {}
 
