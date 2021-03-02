@@ -163,6 +163,59 @@ class GridPositionState(PositionState):
         """
         agent.position = np.random.randint(0, self.region, self.dimension)
 
+class GridUniquePositionState(PositionState):
+    """
+    Agents in the grid, and each grid square can only be occupied by one agent
+    at a time.
+
+    reset_attempts (int):
+        Number of attempts to make in random position reset.
+        Default 100.
+    """
+    def __init__(self, reset_attempts=100, **kwargs):
+        super().__init__(**kwargs)
+        self.reset_attempts = reset_attempts
+    
+    def random_reset(self, agent, **kwargs):
+        """
+        Attempt to randomly assign the agent a unique position in the grid.
+        """
+        # TODO: Can use a random choice up to the number of cells total and then unravel that number to
+        # the 2d rep. This will allow us to get perfect positioning on the first
+        # shot as long as there are enough squares.
+        for _ in range(self.reset_attempts):
+            potential_position = np.random.randint(0, self.region, self.dimension)
+            if not self._collision(agent, potential_position):
+                agent.position = potential_position
+                return
+        raise Exception(f"Could not fit all the agents in the grid within {self.reset_attempts} attempts.")
+    
+    def set_position(self, agent, _position, **kwargs):
+        """
+        Set the agent's position to the incoming value if the new position is within
+        the range and if there is not another agent there already.
+        """
+        if isinstance(agent, PositionAgent):
+            if not (self._out_of_bounds(_position) or self._collision(agent, _position)):
+                agent.position = _position
+    
+    def _collision(self, agent, potential_position, **kwargs):
+        """
+        Return True if the potential position is already taken.
+        """
+        for other in self.agents.values():
+            if other.id != agent.id and other.position is not None and np.all(other.position == potential_position):
+                return True
+        return False
+
+    def _out_of_bounds(self, potential_position, **kwargs):
+        """
+        Return true if the potential position is out of bounds.
+        """
+        return np.all(potential_position >= 0) and np.all(potential_position < self.region)
+                
+
+
 class ContinuousPositionState(PositionState):
     """
     Agents are positioned in a continuous space and can go outside the bounds
