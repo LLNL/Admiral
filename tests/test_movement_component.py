@@ -16,7 +16,7 @@ def test_grid_movement_component():
         'agent3': GridMovementTestAgent(id='agent3', initial_position=np.array([8, 4]), move_range=1),
     }
     state = GridPositionState(region=10, agents=agents)
-    actor = GridMovementActor(position=state, agents=agents)
+    actor = GridMovementActor(position_state=state, agents=agents)
 
     for agent in agents.values():
         assert 'move' in agent.action_space

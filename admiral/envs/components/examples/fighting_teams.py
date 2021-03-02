@@ -29,7 +29,7 @@ class FightingTeamsEnv(AgentBasedSimulation):
         self.team_observer = TeamObserver(team=self.team_state, **kwargs)
 
         # Actor Components
-        self.move_actor = GridMovementActor(position=self.position_state, **kwargs)
+        self.move_actor = GridMovementActor(position_state=self.position_state, **kwargs)
         self.attack_actor = PositionTeamBasedAttackActor(**kwargs)
 
         # Done components

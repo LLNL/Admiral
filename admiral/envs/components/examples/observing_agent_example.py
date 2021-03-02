@@ -22,7 +22,7 @@ class SimpleGridObservations(AgentBasedSimulation):
         self.team_state = TeamState(**kwargs)
 
         # Actor components
-        self.move_actor = GridMovementActor(position=self.position_state, **kwargs)
+        self.move_actor = GridMovementActor(position_state=self.position_state, **kwargs)
 
         # Observers
         self.observer = GridPositionTeamBasedObserver(position=self.position_state, team_state=self.team_state, **kwargs)

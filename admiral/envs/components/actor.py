@@ -1,4 +1,5 @@
 
+from gym.spaces import Box
 import numpy as np
 
 from admiral.envs.components.agent import AttackingAgent, GridMovementAgent, HarvestingAgent, \
@@ -148,15 +149,14 @@ class GridMovementActor:
     agents (dict):
         The dictionary of agents.
     """
-    def __init__(self, position=None, agents=None, **kwargs):
-        self.position = position
+    def __init__(self, position_state=None, agents=None, **kwargs):
+        self.position_state = position_state
         self.agents = agents
-        # Not all agents need to be PositionAgents; only the ones who can move.
 
         from gym.spaces import Box
         for agent in self.agents.values():
             if isinstance(agent, GridMovementAgent):
-                agent.action_space['move'] = Box(-agent.move_range, agent.move_range, (2,), np.int)
+                agent.action_space['move'] = Box(-agent.move_range, agent.move_range, (self.position_state.dimension,), np.int)
 
     def process_move(self, moving_agent, move, **kwargs):
         """
@@ -174,7 +174,7 @@ class GridMovementActor:
         """
         if isinstance(moving_agent, GridMovementAgent) and isinstance(moving_agent, PositionAgent):
             position_before = moving_agent.position
-            self.position.modify_position(moving_agent, move, **kwargs)
+            self.position_state.modify_position(moving_agent, move, **kwargs)
             return moving_agent.position - position_before
 
 class SpeedAngleMovementActor:

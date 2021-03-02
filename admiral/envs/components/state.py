@@ -82,13 +82,18 @@ class PositionState(ABC):
     """
     Manages the agents' positions.
 
+    dimension (int):
+        The dimension in which the agent moves. Currently supports 1 and 2.
+        Default is 2.
+
     region (int):
         The size of the environment.
     
     agents (dict):
         The dictionary of agents.
     """
-    def __init__(self, region=None, agents=None, **kwargs):
+    def __init__(self, dimension=2, region=None, agents=None, **kwargs):
+        self.dimension = dimension
         assert type(region) is int, "Region must be an integer."
         self.region = region
         assert type(agents) is dict, "agents must be a dict"
@@ -137,8 +142,11 @@ class PositionState(ABC):
 class GridPositionState(PositionState):
     """
     Agents are positioned in a grid and cannot go outside of the region. Positions
-    are a 2-element numpy array, where the first element is the grid-row from top
-    to bottom and the second is the grid-column from left to right.
+    are numpy arrays, with dimension depending on the dimension of the space. With
+    a one dimensional problem, there is a 1d array that simply represents the agents
+    position in the space from left to right. With a two dimensional problem, there is a 2d array,
+    where the first element is the grid-row from top to bottom and the second is
+    the grid-column from left to right.
     """
     def set_position(self, agent, _position, **kwargs):
         """
@@ -146,14 +154,14 @@ class GridPositionState(PositionState):
         is within the region.
         """
         if isinstance(agent, PositionAgent):
-            if 0 <= _position[0] < self.region and 0 <= _position[1] < self.region:
+            if np.all(_position >= 0) and np.all(_position < self.region):
                 agent.position = _position
 
     def random_reset(self, agent, **kwargs):
         """
         Set the agents' random positions as integers within the region.
         """
-        agent.position = np.random.randint(0, self.region, 2)
+        agent.position = np.random.randint(0, self.region, self.dimension)
 
 class ContinuousPositionState(PositionState):
     """
@@ -178,7 +186,7 @@ class ContinuousPositionState(PositionState):
         """
         if isinstance(agent, CollisionAgent):
             for _ in range(self.reset_attempts):
-                potential_position = np.random.uniform(0, self.region, 2)
+                potential_position = np.random.uniform(0, self.region, self.dimension)
                 collision = False
                 for other in self.agents.values():
                     if other.id != agent.id and \
@@ -192,7 +200,7 @@ class ContinuousPositionState(PositionState):
                     return
             raise Exception("Could not fit all the agents in the region without collisions")
         else:
-            agent.position = np.random.uniform(0, self.region, 2)
+            agent.position = np.random.uniform(0, self.region, self.dimension)
 
 class SpeedAngleState:
     """
