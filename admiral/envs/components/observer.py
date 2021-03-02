@@ -26,9 +26,8 @@ def obs_filter(obs, agent, agents, null_value):
                 # TODO: make this a parameter to the observers below
                 obs[other.id] = null_value
             else:
-                r_diff = abs(other.position[0] - agent.position[0])
-                c_diff = abs(other.position[1] - agent.position[1])
-                if r_diff > agent.agent_view or c_diff > agent.agent_view: # Agent too far away to observe
+                pos_diff = abs(other.position - agent.position)
+                if np.any(pos_diff > agent.agent_view): # Agent too far away to observe
                     obs[other.id] = null_value
     return obs
 
@@ -235,15 +234,15 @@ class RelativePositionObserver:
     """
     Observe the relative positions of agents in the simulator.
     """
-    def __init__(self, position=None, agents=None, **kwargs):
-        self.position = position
+    def __init__(self, position_state=None, agents=None, **kwargs):
+        self.position_state = position_state
         self.agents = agents
         from gym.spaces import Dict, Box
         for agent in agents.values():
             if isinstance(agent, PositionObservingAgent) and \
                isinstance(agent, PositionAgent):
                 agent.observation_space['position'] = Dict({
-                    other.id: Box(-position.region, position.region, (2,), np.int) for other in agents.values() if (other.id != agent.id and isinstance(other, PositionAgent))
+                    other.id: Box(-self.position_state.region, self.position_state.region, (self.position_state.dimension,), np.int) for other in agents.values() if (other.id != agent.id and isinstance(other, PositionAgent))
                 })
 
     def get_obs(self, agent, **kwargs):
@@ -256,16 +255,14 @@ class RelativePositionObserver:
             for other in self.agents.values():
                 if other.id == agent.id: continue # Don't observe your own position
                 if not isinstance(other, PositionAgent): continue # Can't observe relative position from agents who do not have a position.
-                r_diff = other.position[0] - agent.position[0]
-                c_diff = other.position[1] - agent.position[1]
-                obs[other.id] = np.array([r_diff, c_diff])
+                obs[other.id] = other.position - agent.position
             return {'position': obs}
         else:
             return {}
     
     @property
     def null_value(self):
-        return np.array([-self.position.region, -self.position.region])
+        return np.array([-self.position_state.region, -self.position_state.region])
 
 class PositionRestrictedRelativePositionObserver(RelativePositionObserver):
     """
