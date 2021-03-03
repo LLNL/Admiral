@@ -342,6 +342,42 @@ class GridPositionBasedObserver:
         else:
             return {}
 
+class CorridorPositionBasedObserver:
+    """
+    Agents observe an array of size agent_view centered on their position. The
+    values of the cells are as such:
+        Empty: 0
+        Occupied: 1
+    
+    agents (dict):
+        The dictionary of agents.
+    """
+    def __init__(self, agents=None, **kwargs):
+        self.agents = agents
+        from gym.spaces import MultiBinary
+        for agent in agents.values():
+            if isinstance(agent, AgentObservingAgent) and \
+               isinstance(agent, PositionAgent) and \
+               isinstance(agent, PositionObservingAgent):
+                agent.observation_space['position'] = MultiBinary(agent.agent_view*2+1)
+    
+    def get_obs(self, my_agent, **kwargs):
+        """
+        Observe 0 if the grid square is empty and 1 if it is occupied.
+        """
+        if isinstance(my_agent, AgentObservingAgent) and \
+           isinstance(my_agent, PositionAgent) and \
+           isinstance(my_agent, PositionObservingAgent):
+            signal = np.zeros(my_agent.agent_view*2+1)
+            for other in self.agents.values():
+                if other.id == my_agent.id: continue
+                if not isinstance(other, PositionAgent) or other.position is None: continue
+                diff = other.position - my_agent.position
+                if -my_agent.agent_view <= diff <= my_agent.agent_view:
+                    signal[diff + my_agnet.view] = 1
+        else:
+            return {}
+
 class GridPositionTeamBasedObserver:
     """
     Agents observe a grid of size agent_view centered on their
