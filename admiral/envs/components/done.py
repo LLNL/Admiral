@@ -70,6 +70,35 @@ class TeamDeadDone:
                 team[agent.team] += 1
         return sum(team != 0) <= 1
 
+class TargetPositionDone:
+    """
+    The agent is done if it reaches a specific location.
+
+    target (np.array):
+        The target position for all agents to reach.
+
+    agents (dict):
+        The dictionary of agents.
+    """
+    def __init__(self, target=None, agents=None, **kwargs):
+        self.target = target
+        self.agents = agents
+    
+    def get_done(self, agent, **kwargs):
+        """
+        Return true if the agent reaches done position.
+        """
+        if isinstance(agent, PositionAgent):
+            return np.all(agent.position == self.target)
+        else:
+            return True
+    
+    def get_all_done(self, **kwargs):
+        """
+        Return true if all agents are done.
+        """
+        return all((self.get_done(agent) for agent in self.agents.values()))
+
 class TooCloseDone:
     """
     Agents that are too close to each other or too close to the edge of the region
