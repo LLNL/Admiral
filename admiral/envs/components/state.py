@@ -212,7 +212,7 @@ class GridUniquePositionState(PositionState):
         """
         Return true if the potential position is out of bounds.
         """
-        return np.all(potential_position >= 0) and np.all(potential_position < self.region)
+        return np.any(potential_position < 0) or np.any(potential_position >= self.region)
                 
 
 
