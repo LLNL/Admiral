@@ -374,7 +374,8 @@ class CorridorPositionBasedObserver:
                 if not isinstance(other, PositionAgent) or other.position is None: continue
                 diff = other.position - my_agent.position
                 if -my_agent.agent_view <= diff <= my_agent.agent_view:
-                    signal[diff + my_agnet.view] = 1
+                    signal[diff + my_agent.agent_view] = 1
+            return {'position': signal}
         else:
             return {}
 

@@ -33,7 +33,6 @@ class MultiCorridorEnv(AgentBasedSimulation):
 
         # Observer
         self.nearby_observer = CorridorPositionBasedObserver(**kwargs)
-        self.my_position_observer = PositionObserver(position=self.position_state, **kwargs)
 
         # Done
         self.target_position_done = TargetPositionDone(**kwargs)
@@ -95,8 +94,7 @@ class MultiCorridorEnv(AgentBasedSimulation):
     def get_obs(self, agent_id, **kwargs):
         agent = self.agents[agent_id]
         return {
-            **self.nearboy.get_obs(agent, **kwargs),
-            **self.my_position_observer.get_obs(agent, **kwargs) # TODO: wrap this to only show my own position
+            **self.nearby_observer.get_obs(agent, **kwargs)
         }
     
     def get_reward(self, agent_id, **kwargs):
@@ -129,11 +127,12 @@ if __name__ == '__main__':
     )
 
     env.reset()
+    print(env.get_obs('agent0'))
     env.render()
 
     done_agents = set()
-    for _ in range(200):
-        print(done_agents)
+    for _ in range(50):
+        # print(done_agents)
         actions = {agent.id: agent.action_space.sample() for agent in agents.values() if agent.id not in done_agents}
         env.step(actions)
         env.render()
