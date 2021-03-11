@@ -23,9 +23,10 @@ class State:
         return all([True and func(self, agent, proposed_state_change) for func in self.reqs])
 
 class SpaceState(State):
-    def __init__(self, region=None, agents=None, **kwargs):
+    def __init__(self, region=None, dimension=2, agents=None, **kwargs):
         super().__init__(**kwargs)
         self.region = region
+        self.dimension = dimension
         self.agents = agents
 
     def req_in_bounds(self, agent, proposed_position):
@@ -65,6 +66,7 @@ class ContinuousSpaceState(SpaceState):
         # environment designer has specified a bad setup.
         for agent in self.agents.values():
             if isinstance(agent, ContinuousSpaceAgent) and agent.initial_position is not None:
+                assert len(agent.initial_position) == self.dimension, f"Mismatch in space dimension and {agent.id}'s initial position"
                 if not self.set_position(agent, agent.initial_position, **kwargs):
                     raise ValueError(f"{agent.id}'s specified initial position is invalid in this space.")
         
@@ -75,7 +77,7 @@ class ContinuousSpaceState(SpaceState):
             if isinstance(agent, ContinuousSpaceAgent):
                 could_not_place = True
                 for _ in range(self.random_reset_attempts):
-                    if self.set_position(agent, np.random.uniform(agent.radius, self.region - agent.radius, (2,))):
+                    if self.set_position(agent, np.random.uniform(agent.radius, self.region - agent.radius, (self.dimension,))):
                         could_not_place = False
                         break
                 if could_not_place:
@@ -94,6 +96,44 @@ class ContinuousSpaceState(SpaceState):
             self.set_position(agent, agent.position + value, **kwargs)
             return agent.position - position_before
 
+class StateWrapper:
+    def __init__(self, wrapped_state, *args, **kwargs):
+        self.wrapped_state = wrapped_state
+    
+    def reset(self, *args, **kwargs):
+        return self.wrapped_state.reset(**kwargs)
+
+    def set_position(self, *args, **kwargs):
+        return self.wrapped_state.set_position(*args, **kwargs)
+    
+    def modify_position(self, *args, **kwargs):
+        return self.wrapped_state.modify_position(*args, **kwargs)
+    
+    # TODO: would something like this work? Does it work work with an additional
+    # property argument? How do we define the interface for the state components.
+    # def set_property(self, *args, **kwargs):
+    #     pass
+        # self.wrapped_state.set_property(**kwargs)
+    
+    # def modify_property(self, *args, **kwargs):
+    #     pass
+        # self.wrapped_state.modify_property(**kwargs)
+
+class GridSpaceWrapper(StateWrapper):
+    def __init__(self, *args, grid=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        assert grid is not None, "Why would you use a grid wrapper without the grid?"
+        if type(grid) is tuple:
+            assert len(grid) == self.wrapped_state.dimension, "Grid dimension must match space dimension"
+            self.grid = np.empty(grid, dtype=object) # Is object the right thing to use here for a list/dict of agents?
+        elif type(grid) is int:
+            self.grid = np.empty((grid,) * self.wrapped_state.dimension, dtype=object)
+        else:
+            raise TypeError("We only accept int or tuple for grid argument")
+
+
+
+
 agents = {
     'agent0': ContinuousSpaceAgent(id='agent0', radius=1),
     'agent1': ContinuousSpaceAgent(id='agent1', radius=2),
@@ -106,16 +146,17 @@ agents = {
 
 region = 10
 state = ContinuousSpaceState(region=region, agents=agents, reqs=[ContinuousSpaceState.req_not_overlapped])
+state = GridSpaceWrapper(state)
 try:
     state.reset()
 except RuntimeError:
     print('Runtime error')
     pass
 
+
 from matplotlib import pyplot as plt
 from admiral.tools.matplotlib_utils import mscatter
 fig = plt.figure()
-
 # Draw the resources
 ax = fig.gca()
 
@@ -129,8 +170,9 @@ agents_y = [agent.position[1] for agent in agents.values() if agent.position is 
 agents_size = [3000*agent.radius for agent in agents.values() if agent.position is not None]
 mscatter(agents_x, agents_y, ax=ax, m='o', s=agents_size, edgecolor='black', facecolor='gray')
 
+plt.grid()
 plt.plot()
-plt.show()
+plt.pause(3)
 
 
 
