@@ -54,6 +54,7 @@ class MultiCorridorEnv(AgentBasedSimulation):
             agent = self.agents[agent_id]
             amount_moved = self.movement_actor.process_move(agent, action.get('move', np.zeros(2)), **kwargs)
             
+            # TODO: How to quickly penalize the agent that I bumped into?
             if action['move'][0] == 0:
                 self.reward[agent_id] += -1
             elif action['move'][0] == -1 and amount_moved != -1:
